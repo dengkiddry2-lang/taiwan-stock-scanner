@@ -1,0 +1,35 @@
+name: Daily Taiwan Stock Scanner
+
+on:
+  schedule:
+    - cron: '0 14 * * *' # 每天台灣時間晚上 22:00 執行
+  workflow_dispatch: # 讓你可以手動點擊執行的按鈕
+
+jobs:
+  scan_stock:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚀 複製儲存庫代碼
+      uses: actions/checkout@v3
+
+    - name: 🐍 設定 Python 環境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: 📦 安裝相依套件
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: 🔍 執行選股腳本
+      run: python crawler.py
+
+    - name: 💾 自動將結果提交並推回 GitHub
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git diff --quiet && git diff --staged --quiet || git commit -m "Update stock report $(date +'%Y-%m-%d')"
+        git push
